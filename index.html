@@ -2,77 +2,93 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TITAN BOSS | FINAL</title>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
-    <style>
-        :root { --main: #ff6b00; --bg: #050505; }
-        body { background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; margin: 0; padding-top: 150px; }
-        
-        .header { position: fixed; top: 0; left: 0; right: 0; background: #111; padding: 20px; border-bottom: 2px solid var(--main); z-index: 100; text-align: center; }
-        .input-group { display: flex; justify-content: center; gap: 10px; max-width: 500px; margin: 0 auto; }
-        input { background: #000; border: 1px solid var(--main); color: #fff; padding: 12px; border-radius: 5px; flex: 1; font-family: 'Orbitron'; }
-        button { background: var(--main); border: none; padding: 12px 20px; border-radius: 5px; font-weight: 900; cursor: pointer; }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    <style>
+        :root { --main: #ff6b00; --bg: #000; }
+        body { background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; margin: 0; padding-top: 140px; }
         
-        /* КАРТКА */
-        .card { background: #0d0d0d; border-left: 5px solid var(--main); padding: 20px; border-radius: 10px; position: relative; border-top: 1px solid #222; }
-        .del { position: absolute; top: 10px; right: 10px; cursor: pointer; color: #444; font-weight: 900; }
-        .code { font-size: 1.5rem; color: var(--main); margin-bottom: 10px; }
-        .stat { background: #151515; padding: 10px; border-radius: 5px; margin-top: 10px; }
-        .money { color: #00ff66; font-size: 1.2rem; font-weight: 900; margin-top: 5px; }
-        .reset { width: 100%; background: #222; color: #ff4444; border: 1px solid #333; padding: 8px; margin-top: 10px; cursor: pointer; font-size: 0.7rem; font-family: 'Orbitron'; }
+        .header { 
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: #111; padding: 15px; border-bottom: 2px solid var(--main);
+            text-align: center;
+        }
+        .input-group { display: flex; justify-content: center; gap: 8px; max-width: 90%; margin: 10px auto; }
+        input { background: #000; border: 1px solid var(--main); color: #fff; padding: 10px; border-radius: 5px; flex: 1; font-family: 'Orbitron'; outline: none; }
+        button { background: var(--main); border: none; padding: 10px 15px; border-radius: 5px; font-weight: 900; cursor: pointer; }
+
+        .container { padding: 15px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        
+        /* СТИЛЬ КАРТКИ */
+        .card { 
+            background: #0d0d0d; border: 1px solid #222; border-left: 4px solid var(--main);
+            padding: 20px; border-radius: 12px; position: relative;
+            display: block !important; visibility: visible !important; opacity: 1 !important;
+        }
+        .card-code { font-size: 1.4rem; color: var(--main); margin-bottom: 10px; font-weight: 900; }
+        .stat { background: #1a1a1a; padding: 12px; border-radius: 8px; margin-top: 10px; }
+        .money { color: #00ff66; font-size: 1.2rem; font-weight: 900; margin-top: 5px; display: block; }
+        .del { position: absolute; top: 10px; right: 10px; color: #444; font-size: 1.2rem; cursor: pointer; }
+        .pay-btn { width: 100%; background: #222; color: #ff4444; border: 1px solid #333; padding: 10px; margin-top: 15px; border-radius: 5px; cursor: pointer; font-family: 'Orbitron'; font-size: 0.7rem; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>TITAN ADMIN 🪬</h1>
+    <h2 style="margin:0; font-size:1.2rem; color:var(--main);">TITAN ADMIN 🪬</h2>
     <div class="input-group">
-        <input type="text" id="newCode" placeholder="ВВЕДІТЬ КОД">
+        <input type="text" id="newCode" placeholder="КОД">
         <button onclick="addPartner()">ДОДАТИ</button>
     </div>
 </div>
 
 <div class="container">
-    <div class="grid" id="partnersGrid">
+    <div id="partnersGrid" class="grid">
         </div>
 </div>
 
 <script>
-    // === КОНФІГ (ВСТАВ СВОЇ ДАНІ) ===
+    // === ВСТАВ СВОЇ ДАНІ FIREBASE СЮДИ ===
     const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        appId: "YOUR_APP_ID"
+        apiKey: "ТВОЙ_КЛЮЧ",
+        databaseURL: "ТВОЯ_БАЗА",
+        projectId: "ТВОЙ_ПРОЕКТ",
+        appId: "ТВОЙ_APP_ID"
     };
 
-    // Ініціалізація
-    firebase.initializeApp(firebaseConfig);
+    // Ініціалізація бази
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.database();
 
     // Функція додавання
     function addPartner() {
-        const name = document.getElementById('newCode').value.toUpperCase().trim();
-        if(!name) return;
-        db.ref('affiliates/' + name).set({ count: 0 });
-        document.getElementById('newCode').value = '';
+        const inp = document.getElementById('newCode');
+        const code = inp.value.toUpperCase().trim();
+        if(!code) return;
+        
+        db.ref('affiliates/' + code).set({ count: 0 })
+            .then(() => { inp.value = ''; })
+            .catch(e => alert("Помилка запису: " + e.message));
     }
 
-    // ГОЛОВНИЙ ЦИКЛ МАЛЮВАННЯ
+    // ГОЛОВНИЙ СКРИПТ МАЛЮВАННЯ (LISTEN)
     db.ref('affiliates').on('value', (snap) => {
         const grid = document.getElementById('partnersGrid');
-        grid.innerHTML = ''; // Очищуємо перед малюванням
-        
         const data = snap.val();
-        console.log("Дані отримано:", data); // Подивись у консоль (F12)
+        
+        console.log("Дані отримано:", data); // Перевірка в консолі F12
+        grid.innerHTML = ''; 
 
         if(!data) {
-            grid.innerHTML = '<p style="color:#666">Список порожній. Додайте перший код.</p>';
+            grid.innerHTML = '<p style="text-align:center; color:#555;">База порожня...</p>';
             return;
         }
 
@@ -80,26 +96,29 @@
             const count = data[key].count || 0;
             const money = (count * 0.20).toFixed(2);
 
-            // Створюємо HTML картки
-            grid.innerHTML += `
-                <div class="card">
-                    <div class="del" onclick="deletePartner('${key}')">✕</div>
-                    <div style="font-size: 0.7rem; color: #555;">ПАРТНЕР:</div>
-                    <div class="code">${key}</div>
-                    <div class="stat">
-                        <div style="display:flex; justify-content:space-between">
-                            <span>ЮЗЕРИ:</span><span>${count}</span>
-                        </div>
-                        <div class="money">${money} €</div>
+            // Створюємо HTML вручну для надійності
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="del" onclick="deletePartner('${key}')">✕</div>
+                <div style="font-size:0.6rem; color:#666;">AUTHOR CODE</div>
+                <div class="card-code">${key}</div>
+                <div class="stat">
+                    <div style="display:flex; justify-content:space-between">
+                        <span>АКТИВАЦІЙ:</span><span>${count}</span>
                     </div>
-                    <button class="reset" onclick="resetCount('${key}')">ОБНУЛИТИ</button>
+                    <span class="money">${money} €</span>
                 </div>
+                <button class="pay-btn" onclick="resetCount('${key}')">ОБНУЛИТИ (ВИПЛАЧЕНО)</button>
             `;
+            grid.appendChild(card);
         }
+    }, (error) => {
+        alert("Помилка бази: " + error.message);
     });
 
-    function resetCount(k) { if(confirm("Обнулити?")) db.ref('affiliates/'+k).update({count:0}); }
-    function deletePartner(k) { if(confirm("Видалити?")) db.ref('affiliates/'+k).remove(); }
+    function resetCount(k) { if(confirm("Обнулити " + k + "?")) db.ref('affiliates/'+k).update({count:0}); }
+    function deletePartner(k) { if(confirm("Видалити " + k + " назавжди?")) db.ref('affiliates/'+k).remove(); }
 </script>
 
 </body>
