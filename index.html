@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TITAN BOSS | CONTROL PANEL</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
+    <style>
+        :root { --orange: #ff6b00; --bg: #050505; }
+        body { background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { color: var(--orange); text-align: center; font-size: 1.5rem; text-shadow: 0 0 10px var(--orange); }
+        
+        .add-box { background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 30px; display: flex; gap: 10px; }
+        input { flex: 1; background: #000; border: 1px solid var(--orange); color: #fff; padding: 12px; border-radius: 8px; font-family: 'Orbitron'; }
+        button { background: var(--orange); border: none; color: #000; padding: 12px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .card { background: #0a0a0a; border: 1px solid #222; padding: 20px; border-radius: 15px; transition: 0.3s; }
+        .card:hover { border-color: var(--orange); }
+        .card-name { color: var(--orange); font-size: 1.2rem; margin-bottom: 10px; }
+        .stat-row { display: flex; justify-content: space-between; margin: 5px 0; font-size: 0.9rem; }
+        .val { color: #00ff66; font-weight: 900; }
+        .reset-btn { background: #222; color: #ff4444; width: 100%; margin-top: 15px; font-size: 0.7rem; padding: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>TITAN AFFILIATE SYSTEM 🪬</h1>
+
+    <div class="add-box">
+        <input type="text" id="newCode" placeholder="КОД (НАПР. BLOGER7)">
+        <button onclick="addPartner()">ДОДАТИ</button>
+    </div>
+
+    <div class="grid" id="partnersGrid">
+        </div>
+</div>
+
+<script>
+    // ТВОЇ ДАНІ FIREBASE (СКОПІЮЙ З КОНСОЛІ)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+        projectId: "YOUR_PROJECT",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // Створення нового коду
+    function addPartner() {
+        const code = document.getElementById('newCode').value.toUpperCase().trim();
+        if (!code) return;
+        
+        db.ref('affiliates/' + code).set({
+            count: 0,
+            createdAt: Date.now()
+        }).then(() => {
+            document.getElementById('newCode').value = '';
+        });
+    }
+
+    // Оновлення списку в реальному часі
+    db.ref('affiliates').on('value', (snap) => {
+        const grid = document.getElementById('partnersGrid');
+        grid.innerHTML = '';
+        const data = snap.val();
+
+        for (let code in data) {
+            const count = data[code].count || 0;
+            const money = (count * 0.10).toFixed(2); // 0.10 євро за людину
+
+            grid.innerHTML += `
+                <div class="card">
+                    <div class="card-name">${code}</div>
+                    <div class="stat-row">
+                        <span>АКТИВАЦІЙ:</span>
+                        <span class="val">${count}</span>
+                    </div>
+                    <div class="stat-row">
+                        <span>ДО СПЛАТИ:</span>
+                        <span class="val">${money} €</span>
+                    </div>
+                    <button class="reset-btn" onclick="resetCount('${code}')">ВИПЛАЧЕНО (ОБНУЛИТИ)</button>
+                </div>
+            `;
+        }
+    });
+
+    function resetCount(code) {
+        if(confirm("ОБНУЛИТИ " + code + "?")) {
+            db.ref('affiliates/' + code).update({ count: 0 });
+        }
+    }
+</script>
+
+</body>
+</html>
