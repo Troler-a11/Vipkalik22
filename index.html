@@ -13,55 +13,57 @@
         :root { --main: #ff6b00; --bg: #050505; --card-bg: #0d0d0d; }
         body { background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; margin: 0; padding-top: 180px; }
         
-        /* ЗАКРІПЛЕНА ШАПКА */
         .admin-header { 
             position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
             background: rgba(17, 17, 17, 0.95); backdrop-filter: blur(10px);
             padding: 20px; border-bottom: 2px solid var(--main);
-            text-align: center; box-shadow: 0 5px 20px rgba(0,0,0,0.8);
+            text-align: center; box-shadow: 0 5px 30px rgba(0,0,0,0.8);
         }
         
         .input-group { display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto; }
         input { 
             background: #000; border: 1px solid var(--main); color: #fff; 
-            padding: 12px; border-radius: 8px; flex: 1; font-family: 'Orbitron'; outline: none;
+            padding: 15px; border-radius: 10px; flex: 1; font-family: 'Orbitron'; outline: none;
         }
         .add-btn { 
-            background: var(--main); border: none; padding: 12px 25px; 
-            border-radius: 8px; font-weight: 900; cursor: pointer;
+            background: var(--main); border: none; padding: 15px 30px; 
+            border-radius: 10px; font-weight: 900; cursor: pointer; transition: 0.3s;
         }
+        .add-btn:hover { transform: scale(1.05); background: #ff8533; }
 
-        /* СПИСОК КАРТОК (БЕЗКІНЕЧНИЙ) */
         .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         
         .card { 
             background: var(--card-bg); border-left: 5px solid var(--main); 
-            padding: 20px; border-radius: 15px; position: relative;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5); border-top: 1px solid #222;
+            padding: 25px; border-radius: 15px; position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); border-top: 1px solid #222;
+            animation: fadeIn 0.5s ease;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .del-btn { position: absolute; top: 10px; right: 15px; color: #444; cursor: pointer; font-size: 1.2rem; }
+        .del-btn { position: absolute; top: 15px; right: 15px; color: #444; cursor: pointer; font-size: 1.3rem; font-weight: 900; }
         .del-btn:hover { color: #ff4444; }
 
-        .card-code { font-size: 1.5rem; color: #fff; margin: 5px 0; font-weight: 900; color: var(--main); }
+        .card-code { font-size: 1.7rem; color: var(--main); margin: 10px 0; font-weight: 900; letter-spacing: 2px; }
         
-        .stat-box { background: #151515; padding: 12px; border-radius: 8px; margin-top: 10px; border: 1px solid #222; }
-        .stat-line { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; }
-        .money-val { color: #00ff66; font-size: 1.1rem; font-weight: 900; }
+        .stat-box { background: #151515; padding: 15px; border-radius: 10px; margin-top: 15px; border: 1px solid #222; }
+        .stat-line { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
+        .money-val { color: #00ff66; font-size: 1.3rem; font-weight: 900; }
 
         .pay-btn { 
             width: 100%; background: #222; color: #ff4444; border: 1px solid #333; 
-            padding: 10px; margin-top: 15px; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-family: 'Orbitron';
+            padding: 12px; margin-top: 20px; border-radius: 8px; cursor: pointer; font-family: 'Orbitron'; font-size: 0.7rem;
         }
+        .pay-btn:hover { background: #ff4444; color: #000; font-weight: 900; }
     </style>
 </head>
 <body>
 
 <div class="admin-header">
-    <h1>TITAN PARTNER LIST 🪬</h1>
+    <h1 style="color:var(--main); margin:0 0 15px 0; font-size:1.4rem;">TITAN PARTNER CONTROL 🪬</h1>
     <div class="input-group">
-        <input type="text" id="newCode" placeholder="НОВИЙ КОД">
+        <input type="text" id="newCode" placeholder="ВВЕДІТЬ НОВИЙ КОД">
         <button class="add-btn" onclick="addPartner()">ДОДАТИ</button>
     </div>
 </div>
@@ -72,53 +74,83 @@
 </div>
 
 <script>
-    // ПІДКЛЮЧИ СВІЙ FIREBASE ТУТ
+    // === ТВОЇ ДАНІ FIREBASE (ОБОВ'ЯЗКОВО ЗАМІНИ!) ===
     const firebaseConfig = {
-        apiKey: "ТВОЙ_КЛЮЧ",
-        databaseURL: "ТВОЯ_ССЫЛКА",
-        projectId: "ТВОЙ_ID",
-        appId: "ТВОЙ_APP_ID"
+        apiKey: "YOUR_API_KEY",
+        databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+        projectId: "YOUR_PROJECT",
+        appId: "YOUR_APP_ID"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // Додавання партнера з перевіркою помилок
     function addPartner() {
-        const val = document.getElementById('newCode').value.toUpperCase().trim();
-        if (!val) return;
-        db.ref('affiliates/' + val).set({ count: 0 }).then(() => {
-            document.getElementById('newCode').value = '';
+        const inp = document.getElementById('newCode');
+        const code = inp.value.toUpperCase().trim();
+        
+        if (!code) return;
+
+        db.ref('affiliates/' + code).set({
+            count: 0,
+            time: Date.now()
+        })
+        .then(() => {
+            console.log("Успішно!");
+            inp.value = '';
+        })
+        .catch(err => {
+            alert("ПОМИЛКА БАЗИ: " + err.message + "\nПеревір Rules у Firebase!");
         });
     }
 
+    // Слухач бази (малює картки автоматично)
     db.ref('affiliates').on('value', (snap) => {
         const grid = document.getElementById('partnersGrid');
         grid.innerHTML = '';
         const data = snap.val();
-        if (!data) return;
 
-        // Сортуємо, щоб нові були зверху (якщо треба)
+        if (!data) {
+            grid.innerHTML = '<p style="color:#444; text-align:center; grid-column: 1/-1;">Список партнерів порожній...</p>';
+            return;
+        }
+
         for (let code in data) {
             const count = data[code].count || 0;
-            const money = (count * 0.20).toFixed(2); // Твої 0.20 євро
+            const money = (count * 0.20).toFixed(2);
 
             grid.innerHTML += `
                 <div class="card">
                     <div class="del-btn" onclick="deletePartner('${code}')">✕</div>
-                    <div style="font-size:0.6rem; color:#666;">AUTHOR:</div>
+                    <div style="font-size:0.7rem; color:#555; letter-spacing:1px;">AUTHOR CODE:</div>
                     <div class="card-code">${code}</div>
                     <div class="stat-box">
                         <div class="stat-line"><span>ЮЗЕРІВ:</span><span style="color:#fff">${count}</span></div>
-                        <div class="stat-line"><span>ВИПЛАТА:</span><span class="money-val">${money} €</span></div>
+                        <div class="stat-line" style="border-top:1px solid #222; margin-top:10px; padding-top:10px;">
+                            <span>ДО ВИПЛАТИ:</span>
+                            <span class="money-val">${money} €</span>
+                        </div>
                     </div>
-                    <button class="pay-btn" onclick="resetCount('${code}')">ОБНУЛИТИ</button>
+                    <button class="pay-btn" onclick="resetCount('${code}')">ОБНУЛИТИ (ВИПЛАЧЕНО)</button>
                 </div>
             `;
         }
+    }, (err) => {
+        alert("Помилка читання бази: " + err.message);
     });
 
-    function resetCount(c) { if(confirm("Виплатив для "+c+"?")) db.ref('affiliates/'+c).update({count:0}); }
-    function deletePartner(c) { if(confirm("Видалити "+c+"?")) db.ref('affiliates/'+c).remove(); }
+    function resetCount(c) {
+        if(confirm("Обнулити лічильник для " + c + "?")) {
+            db.ref('affiliates/' + c).update({ count: 0 });
+        }
+    }
+
+    function deletePartner(c) {
+        if(confirm("ВИДАЛИТИ " + c + " НАЗАВЖДИ?")) {
+            db.ref('affiliates/' + c).remove();
+        }
+    }
 </script>
 
 </body>
