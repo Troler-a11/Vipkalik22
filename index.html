@@ -3,124 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TITAN BOSS | ADMIN</title>
-    
+    <title>TITAN FIX</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap" rel="stylesheet">
-
     <style>
-        :root { --main: #ff6b00; --bg: #000; }
-        body { background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; margin: 0; display: flex; flex-direction: column; min-height: 100vh; }
+        body { background: #000; color: #fff; font-family: sans-serif; padding: 10px; }
         
-        /* КОНТЕЙНЕР КАРТОК - ТЕПЕР ЗВЕРХУ */
-        #partnersGrid { 
-            flex: 1;
-            display: flex;
-            flex-direction: column-reverse; /* НОВІ БУДУТЬ ВНИЗУ, АЛЕ НАД ПОЛЕМ */
-            align-items: center;
-            padding: 20px;
-            gap: 15px;
-            overflow-y: auto;
-        }
-
-        /* СТИЛЬ ПОМАРАНЧЕВОЇ КАРТКИ */
-        .card { 
-            width: 90%;
-            max-width: 400px;
-            background: var(--main); /* КАРТКА ПОМАРАНЧЕВА */
-            color: #000; /* ТЕКСТ ЧОРНИЙ НА ПОМАРАНЧЕВОМУ */
-            padding: 20px;
-            border-radius: 15px;
-            position: relative;
-            box-shadow: 0 0 20px rgba(255, 107, 0, 0.4);
-            font-weight: 900;
-        }
-
-        .card-code { font-size: 1.8rem; margin-bottom: 5px; text-transform: uppercase; }
-        .stat { background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px; margin: 10px 0; }
-        .money { font-size: 1.5rem; border-top: 2px solid #000; padding-top: 10px; display: block; }
+        /* КАРТКИ ЗВЕРХУ */
+        #list { display: flex; flex-direction: column-reverse; gap: 10px; margin-bottom: 100px; }
+        .card { background: #ff6b00; color: #000; padding: 15px; border-radius: 10px; font-weight: bold; position: relative; }
         
-        .del { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; }
-
-        /* ПАНЕЛЬ ВВОДУ - ТЕПЕР ЗНИЗУ */
-        .bottom-panel { 
-            background: #111; 
-            padding: 20px; 
-            border-top: 3px solid var(--main);
-            position: sticky;
-            bottom: 0;
+        /* КНОПКА ТА ПОЛЕ ЗНИЗУ */
+        .controls { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: #111; padding: 20px; border-top: 2px solid #ff6b00; 
+            display: flex; gap: 10px; z-index: 9999; 
         }
-        .input-group { display: flex; gap: 10px; max-width: 500px; margin: 0 auto; }
-        input { background: #000; border: 2px solid var(--main); color: #fff; padding: 12px; border-radius: 8px; flex: 1; font-family: 'Orbitron'; outline: none; }
-        button.add-btn { background: var(--main); border: none; padding: 12px 20px; border-radius: 8px; font-weight: 900; cursor: pointer; color: #000; }
+        input { flex: 1; padding: 15px; border-radius: 5px; border: 1px solid #ff6b00; background: #000; color: #fff; }
+        #addBtn { background: #ff6b00; color: #000; border: none; padding: 15px; border-radius: 5px; font-weight: bold; cursor: pointer; min-width: 100px; }
     </style>
 </head>
 <body>
 
-<div id="partnersGrid">
-    <p id="emptyMsg" style="color: #333;">Завантаження бази...</p>
-</div>
+    <div id="list">Завантаження...</div>
 
-<div class="bottom-panel">
-    <div class="input-group">
-        <input type="text" id="newCode" placeholder="КОД ПАРТНЕРА">
-        <button class="add-btn" onclick="addPartner()">ДОДАТИ</button>
+    <div class="controls">
+        <input type="text" id="codeInp" placeholder="КОД">
+        <button id="addBtn">ДОДАТИ</button>
     </div>
-</div>
 
 <script>
-    // === КОНФІГ ===
-    const firebaseConfig = {
-        apiKey: "ТВОЙ_API_KEY",
-        databaseURL: "https://ТВОЙ_PROJECT.firebaseio.com",
-        projectId: "ТВОЙ_PROJECT",
-        appId: "ТВОЙ_APP_ID"
+    const config = {
+        apiKey: "ТВІЙ_КЛЮЧ",
+        databaseURL: "ТВОЯ_БАЗА",
+        projectId: "ТВІЙ_ID",
+        appId: "ТВІЙ_APP_ID"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(config);
     const db = firebase.database();
 
-    function addPartner() {
-        const inp = document.getElementById('newCode');
-        const code = inp.value.toUpperCase().trim();
-        if(!code) return;
-        db.ref('affiliates/' + code).set({ count: 0 }).then(() => { inp.value = ''; });
-    }
+    // ПЕРЕВІРКА КЛІКУ
+    document.getElementById('addBtn').addEventListener('click', function() {
+        const val = document.getElementById('codeInp').value.toUpperCase().trim();
+        if(!val) return;
+
+        // Якщо кнопка працює - ти побачиш це вікно
+        console.log("Кнопка натиснута, код:", val);
+
+        db.ref('affiliates/' + val).set({ count: 0 })
+            .then(() => { document.getElementById('codeInp').value = ''; })
+            .catch(e => alert("Помилка бази: " + e.message));
+    });
 
     // МАЛЮВАННЯ
-    db.ref('affiliates').on('value', (snap) => {
-        const grid = document.getElementById('partnersGrid');
-        const data = snap.val();
-        grid.innerHTML = ''; 
+    db.ref('affiliates').on('value', (s) => {
+        const div = document.getElementById('list');
+        const data = s.val();
+        div.innerHTML = '';
+        if(!data) { div.innerHTML = 'Пусто'; return; }
 
-        if(!data) {
-            grid.innerHTML = '<p style="color:#444">БАЗА ПОРОЖНЯ. ДОДАЙТЕ КОД ЗНИЗУ.</p>';
-            return;
-        }
-
-        for (let key in data) {
-            const count = data[key].count || 0;
-            const money = (count * 0.20).toFixed(2);
-
-            grid.innerHTML += `
+        for(let k in data) {
+            div.innerHTML += `
                 <div class="card">
-                    <div class="del" onclick="deletePartner('${key}')">✕</div>
-                    <div style="font-size:0.7rem; opacity:0.7;">ПАРТНЕР:</div>
-                    <div class="card-code">${key}</div>
-                    <div class="stat">
-                        ЮЗЕРІВ: ${count}
-                    </div>
-                    <b class="money">${money} €</b>
-                    <button onclick="resetCount('${key}')" style="width:100%; margin-top:10px; background:#000; color:#fff; border:none; padding:8px; border-radius:5px; font-family:'Orbitron'; font-size:10px; cursor:pointer;">ОБНУЛИТИ</button>
+                    <div>${k}</div>
+                    <div style="font-size: 20px;">${(data[k].count * 0.2).toFixed(2)} €</div>
+                    <button onclick="if(confirm('Видалити?')) firebase.database().ref('affiliates/${k}').remove()" style="position:absolute; top:5px; right:5px; background:none; border:none; font-weight:bold; cursor:pointer;">✕</button>
                 </div>
             `;
         }
     });
-
-    function resetCount(k) { if(confirm("Обнулити?")) db.ref('affiliates/'+k).update({count:0}); }
-    function deletePartner(k) { if(confirm("Видалити?")) db.ref('affiliates/'+k).remove(); }
 </script>
-
 </body>
 </html>
